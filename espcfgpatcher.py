@@ -1,14 +1,10 @@
 #!/usr/bin/python
 __author__ = 'srodgers'
 
-import sys
 import struct
-import math
-import time
-import serial
 import argparse
-import os
-import subprocess
+import ConfigParser
+
 
 
 # First byte of the application image
@@ -125,10 +121,43 @@ class ESPFirmwareImage:
         f.write(struct.pack('B', checksum))
         #print "Write Checksum: {}".format(checksum)
 
-Img = ESPFirmwareImage("0x00000.bin")
-patchItems = Img.getPatchItems()
-patchItems[0][2]="qrvc-ap-03"
-Img.setPatchItems(patchItems)
-print patchItems
-Img.save("out.bin")
+if __name__ == '__main__':
+    #command line parser setup
+    parser = argparse.ArgumentParser(description = 'ESP8266 Config Patching Utility', prog = 'espcfgpatcher.py')
+
+    subparsers = parser.add_subparsers(dest = 'operation', help = 'Run espcfgpatcher.py {command} -h for additional help')
+
+    parser_print_config = subparsers.add_parser('print_config', help = 'Print current configuration')
+    parser_print_config.add_argument('infile', help = 'Input firmware image file name')
+
+    parser_patch = subparsers.add_parser('patch', help = 'Patch firmware file')
+    parser_patch.add_argument('infile', help = 'Input firmware image file name')
+    parser_patch.add_argument('configfile', help = 'Configuration file name')
+    parser_patch.add_argument('outfile', help = 'Output firmware image file name')
+
+    # parse the args and die on error
+    args = parser.parse_args()
+
+    # always load the image
+    Img = ESPFirmwareImage(args.infile)
+    patchItems = Img.getPatchItems()
+
+    # if patch, read the patch file and make the changes
+    if(args.operation == "patch"):
+        Config = ConfigParser.ConfigParser()
+        Config.read(args.configfile)
+        configdict = dict(Config.items("general"))
+        for i in xrange(len(patchItems)):
+            if (patchItems[i][1].lower() not in configdict):
+                if(patchItems[i][0] & 1):
+                    raise Exception("Required key {} not found in config file!".format(patchItems[i][1]))
+            else:
+                patchItems[i][2] = configdict[patchItems[i][1].lower()]
+        print patchItems
+        Img.setPatchItems(patchItems)
+    # otherwise just list the changes in the current input file
+    else:
+        print(patchItems)
+    if(args.operation == "patch"):
+        Img.save(args.outfile)
 
