@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 __author__ = 'srodgers'
 
 import struct
@@ -97,10 +97,10 @@ class ESPFirmwareImage:
             for i in xrange(self.patchrecordlength * self.patchelem):
                 self.patchdata[entrybase + i] = 0
             # Update patch area
-            for i in xrange(len(newpatchitems)):
+            for i,sl in enumerate(newpatchitems):
                 formatstring = "<B15s{}s".format(self.patchrecordlength - 16)
                 self.patchdata[entrybase + i * self.patchrecordlength: entrybase + (i + 1) * self.patchrecordlength] = \
-                struct.pack(formatstring, newpatchitems[i][0], newpatchitems[i][1], newpatchitems[i][2])
+                struct.pack(formatstring, sl[0], sl[1], sl[2])
                 #print newpatchitems[i][1]
             return
 
@@ -147,18 +147,22 @@ if __name__ == '__main__':
         Config = ConfigParser.ConfigParser()
         Config.read(args.configfile)
         configdict = dict(Config.items("general"))
-        for i in xrange(len(patchItems)):
-            if (patchItems[i][1].lower() not in configdict):
-                if(patchItems[i][0] & 1):
-                    raise Exception("Required key {} not found in config file!".format(patchItems[i][1]))
+        for sl in patchItems:
+            if (sl[1].lower() not in configdict):
+                if(sl[0] & 1):
+                    print "espconfigpatcher: Config file error. Required key {} not found in config file!".format(sl[1])
+                    exit(1)
             else:
-                patchItems[i][2] = configdict[patchItems[i][1].lower()]
+                sl[2] = configdict[sl[1].lower()]
         Img.setPatchItems(patchItems)
     # otherwise just list the changes in the current input file
     else:
+        print
         print"{0:8} {1:15} {2:64}".format("FLAGS", "KEY", "VALUE")
         print"{0:8} {1:15} {2:64}".format("-----", "---", "-----")
-        for i in xrange(len(patchItems)):
-            print"{0:<8} {1:15} {2:64}".format(hex(patchItems[i][0]), patchItems[i][1], patchItems[i][2])
+        for sl in patchItems:
+            print"{0:<8} {1:15} {2:64}".format(hex(sl[0]), sl[1], sl[2])
+        print
     if(args.operation == "patch"):
         Img.save(args.outfile)
+    exit(0)
