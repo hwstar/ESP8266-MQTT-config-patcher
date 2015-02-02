@@ -153,11 +153,12 @@ if __name__ == '__main__':
                     raise Exception("Required key {} not found in config file!".format(patchItems[i][1]))
             else:
                 patchItems[i][2] = configdict[patchItems[i][1].lower()]
-        print patchItems
         Img.setPatchItems(patchItems)
     # otherwise just list the changes in the current input file
     else:
-        print(patchItems)
+        print"{0:8} {1:15} {2:64}".format("FLAGS", "KEY", "VALUE")
+        print"{0:8} {1:15} {2:64}".format("-----", "---", "-----")
+        for i in xrange(len(patchItems)):
+            print"{0:<8} {1:15} {2:64}".format(hex(patchItems[i][0]), patchItems[i][1], patchItems[i][2])
     if(args.operation == "patch"):
         Img.save(args.outfile)
-
