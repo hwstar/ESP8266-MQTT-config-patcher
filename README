@@ -1,0 +1,29 @@
+espcfgpatcher.py
+
+A patching utility for ESP8266 MQTT-based nodes.
+
+This small Python utility patches an ESP8266 code image (0x00000.bin) so that configuration parameters can be changed
+post-compile. This keeps the configuation separate from the source code, and allows several variants of the same code
+to be deployed in ESP8266 nodes.
+
+The utility looks for the signature ESP8266HWSTARSR in the 0x00000.bin image file and then updates all of the default
+configuration settings with those specified in a text configuration file.
+
+USAGE is as follows:
+
+espcfgpatcher.py patch infile.bin configfile.txt outfile.bin
+espcfgpatcher.py print_config infile.bin
+
+The utility can both patch and display the configuration values of a firmware image.
+
+Some fields may be flagged as mandatory and will require entries in the text configuration file. This include things
+like the MQTT host name, WIFI SSID, WIFI Password, and Main topic.
+
+A sample text config file is as follows:
+
+[general]
+WIFISSID = nunya
+WIFIPASS = statesecret
+MQTTHOST = 127.0.0.1
+MQTTTOPIC = /home/control/relay
+
